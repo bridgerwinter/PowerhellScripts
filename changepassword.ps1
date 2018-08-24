@@ -35,7 +35,6 @@
 			Write-Host "They do not match! Can you please start again?" -BackgroundColor Red -ForegroundColor Black
 			clearvars $username $password $valid $newpass $newpassconfirm
 		}
-		
 	}
 	else
 	{	Write-Host "You could not be validated! Try again" -BackgroundColor Red -ForegroundColor Black
@@ -57,6 +56,4 @@ Function Test-ADAuthentication($username, $password)
 	Write-Host "Testing user credentials..."
 	(new-object directoryservices.directoryentry "", $username, $password).psbase.name -ne $null
 }
-
-
 Main
