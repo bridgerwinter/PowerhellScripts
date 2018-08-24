@@ -1,0 +1,83 @@
+#This mess of code attempts to log them off nicely and then pulls down their session id and finds their winlogon process and kills it
+
+#$ErrorActionPreference = 'silentlycontinue'
+$serverList = Get-Content "Serverlist.txt"
+$user = Read-Host "User"
+foreach ($item in $serverList)
+{
+	$count = 0
+	if (quser $user /server:$item)
+	{
+		Write-Host "Searching for $user"
+		$session = ((quser /server:$item | ? { $_ -match $user }) -split ' +')[2]
+		$session = $session -replace "rdp-tcp", "RDP-Tcp"
+		Write-Host $session
+		$id = $session -split '\n'[1]
+		$id = $id -replace '\D+(\d+)', '$1'
+		Write-Host "$user exists on $item"
+
+		while (quser /server:$item $user)
+		{
+			Write-Host "Making sure $user is being removed."
+			if (!(quser $user /server:$item))
+			{
+				Write-Host "$user has been logged off."
+				exit
+			}
+			elseif (quser $user /server:$item)
+			{
+				logoff /server:$item $session
+				$count += 1
+				Write-Host "Attempting Logoff $count : sleeping for two seconds."
+				sleep -s 2
+				if (!(quser $user /server:$item))
+				{
+					Write-Host "$user has been logged off."
+					exit
+				}
+				else{ }
+			}
+			if ($count -eq 2)
+			{
+				Write-Host "Attempted to Logoff nicely twice. Killing winlogon..."
+				$tasklist = tasklist /s $item
+				foreach ($word in $tasklist)
+				{
+					if ($word | Select-String -Pattern $session)
+					{
+						#put this into a array then search the strings in the array
+						if ($word | Select-String -Pattern "winlogon")
+						{
+							$winlogon = $word | Select-String -Pattern "winlogon"
+							$winlogon = $winlogon -split "\s+"
+							$winlogon = $winlogon[1]
+							$winlogon.Trim()
+							$item.Trim()
+							$winlogon = [int]$winlogon
+							$item = [string]$item
+							tskill $winlogon /server:$item
+							sleep -s 2
+							Write-Host "$user has been logged off."
+							exit
+							
+						}
+						else
+						{
+							#do nothing
+						}
+					}
+					else
+					{
+						#do nothing
+					}
+				}
+			}
+			else
+			{
+				#donothing
+			}
+		}
+		Write-Host "$user has been logged off"
+		exit
+	}
+}
