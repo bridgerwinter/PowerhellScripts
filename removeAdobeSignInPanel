@@ -1,0 +1,21 @@
+#remove sign in panel when a user launches a script by editing dexechosign and dexshare, it will change them back after their file has been launched
+
+function Main
+{
+	$valid = true
+	
+	while (get-process | ?{ $_.path -eq "{Path To Explorer or Explorer++" })
+	{
+		if ($valid -eq $true)
+		{
+			Rename-Item  "T:\Program Files (x86)\Adobe\Reader 11.0\Reader\Services\DEXEchoSign.spi" DexEchoOld.spi
+			Rename-Item  "T:\Program Files (x86)\Adobe\Reader 11.0\Reader\Services\DEXShare.spi" DexShareOld.spi
+		}
+		$valid = $false
+	}
+	
+	Set-Location -Path "T:\Program Files (x86)\Adobe\Reader 11.0\Reader\Services\"
+	Rename-Item DEXEchoOld.spi DEXEchoSign.spi
+	Rename-Item DexShareOld.spi DexShare.spi
+}
+Main
